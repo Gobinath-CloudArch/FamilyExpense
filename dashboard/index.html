@@ -1,0 +1,52 @@
+<!-- User Management Panel -->
+<div class="panel glass" id="admin-panel" style="display: none;">
+    <div class="panel-head">
+        <div class="panel-title">Family User Management</div>
+    </div>
+    
+    <div class="form-grid" style="margin-bottom: 20px;">
+        <input type="text" id="new-user-id" placeholder="User ID (e.g., child1)" class="filter">
+        <input type="text" id="new-user-name" placeholder="Display Name" class="filter">
+        <button class="btn primary-sm" onclick="manageUser('ADD')">Add Member</button>
+    </div>
+
+    <div id="user-list">
+        <!-- Rendered via JS -->
+    </div>
+</div>
+
+<script>
+    // Enforce Dashboard Session
+    const token = localStorage.getItem('gf_token');
+    const user = JSON.parse(localStorage.getItem('gf_user'));
+    
+    if (!token) window.location.href = '../index.html';
+    if (user.role === 'Owner') document.getElementById('admin-panel').style.display = 'block';
+
+    async function manageUser(action, userId = null) {
+        let payloadData = { userId: userId };
+        
+        if (action === 'ADD') {
+            payloadData.userId = document.getElementById('new-user-id').value;
+            payloadData.name = document.getElementById('new-user-name').value;
+        } else if (action === 'RESET' && !confirm(`Reset password for ${userId}? They will set a new one on next login.`)) {
+            return;
+        }
+
+        const payload = {
+            action: action === 'ADD' ? 'addUser' : action === 'REMOVE' ? 'removeUser' : 'resetPassword',
+            token: token,
+            data: payloadData
+        };
+
+        try {
+            const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
+            const result = await response.json();
+            if (result.error) throw new Error(result.error);
+            alert('Action completed successfully.');
+            // Refresh local user list UI here
+        } catch (err) {
+            alert(err.message);
+        }
+    }
+</script>
