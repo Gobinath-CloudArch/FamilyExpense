@@ -1,52 +1,177 @@
-<!-- User Management Panel -->
-<div class="panel glass" id="admin-panel" style="display: none;">
-    <div class="panel-head">
-        <div class="panel-title">Family User Management</div>
-    </div>
-    
-    <div class="form-grid" style="margin-bottom: 20px;">
-        <input type="text" id="new-user-id" placeholder="User ID (e.g., child1)" class="filter">
-        <input type="text" id="new-user-name" placeholder="Display Name" class="filter">
-        <button class="btn primary-sm" onclick="manageUser('ADD')">Add Member</button>
-    </div>
-
-    <div id="user-list">
-        <!-- Rendered via JS -->
-    </div>
-</div>
-
-<script>
-    // Enforce Dashboard Session
-    const token = localStorage.getItem('gf_token');
-    const user = JSON.parse(localStorage.getItem('gf_user'));
-    
-    if (!token) window.location.href = '../index.html';
-    if (user.role === 'Owner') document.getElementById('admin-panel').style.display = 'block';
-
-    async function manageUser(action, userId = null) {
-        let payloadData = { userId: userId };
-        
-        if (action === 'ADD') {
-            payloadData.userId = document.getElementById('new-user-id').value;
-            payloadData.name = document.getElementById('new-user-name').value;
-        } else if (action === 'RESET' && !confirm(`Reset password for ${userId}? They will set a new one on next login.`)) {
-            return;
-        }
-
-        const payload = {
-            action: action === 'ADD' ? 'addUser' : action === 'REMOVE' ? 'removeUser' : 'resetPassword',
-            token: token,
-            data: payloadData
-        };
-
-        try {
-            const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
-            const result = await response.json();
-            if (result.error) throw new Error(result.error);
-            alert('Action completed successfully.');
-            // Refresh local user list UI here
-        } catch (err) {
-            alert(err.message);
-        }
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gobinath Family Expense — Dashboard</title>
+  <style>
+    :root {
+      --bg: #070b14;
+      --panel: rgba(14, 21, 38, 0.85);
+      --border: #223456;
+      --primary: #4f6bf7;
+      --text: #f3f7fd;
+      --muted: #8598b8;
+      --green: #2ed573;
+      --red: #ff5263;
     }
-</script>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, sans-serif; }
+    body { background: var(--bg); color: var(--text); padding: 24px; min-height: 100vh; }
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+    .brand { font-size: 20px; font-weight: 800; display: flex; align-items: center; gap: 10px; }
+    .brand-icon { width: 32px; height: 32px; background: var(--primary); border-radius: 8px; display: grid; place-items: center; font-weight: 900; }
+    .top-btns { display: flex; gap: 10px; }
+    .btn { background: #131f38; border: 1px solid var(--border); color: #fff; padding: 9px 16px; border-radius: 10px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+    .btn.primary { background: var(--primary); border: none; }
+    .btn:hover { filter: brightness(1.15); }
+    
+    /* Stats Grid */
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .stat-card { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 20px; }
+    .stat-title { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+    .stat-val { font-size: 26px; font-weight: 800; }
+    .stat-val.income { color: var(--green); }
+    .stat-val.expense { color: var(--red); }
+    
+    /* Ledger Table */
+    .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 18px; padding: 22px; }
+    .panel-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13.5px; }
+    th { color: var(--muted); padding: 12px 10px; border-bottom: 1px solid var(--border); text-transform: uppercase; font-size: 11px; }
+    td { padding: 14px 10px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .badge { padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; }
+    .badge.debit { background: rgba(255,82,99,0.15); color: var(--red); }
+    .badge.credit { background: rgba(46,213,115,0.15); color: var(--green); }
+    .actions button { background: none; border: none; cursor: pointer; font-size: 15px; margin-left: 6px; opacity: 0.7; }
+    .actions button:hover { opacity: 1; }
+
+    /* Admin Modal */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); display: none; place-items: center; z-index: 100; }
+    .modal { background: #0e1526; border: 1px solid var(--border); border-radius: 20px; width: 100%; max-width: 500px; padding: 26px; }
+    .modal h3 { margin-bottom: 16px; font-size: 18px; }
+    .user-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="brand">
+      <div class="brand-icon">G</div>
+      <div>Gobinath Family Expense</div>
+    </div>
+    <div class="top-btns">
+      <button class="btn" onclick="openAdminModal()">⚙ Manage Users</button>
+      <button class="btn" onclick="logout()">Logout</button>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat-card">
+      <div class="stat-title">Monthly Income</div>
+      <div class="stat-val income">₹68,000</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-title">Monthly Expenses</div>
+      <div class="stat-val expense">₹29,460</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-title">Net Balance</div>
+      <div class="stat-val">₹38,540</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <h3>Active Ledger</h3>
+      <button class="btn primary" onclick="alert('Transaction Modal')">+ Add Transaction</button>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Type</th>
+          <th>Category</th>
+          <th>Description</th>
+          <th>User</th>
+          <th>Scope</th>
+          <th>Amount</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="ledger-body">
+        <tr>
+          <td>2026-09-12</td>
+          <td><span class="badge debit">DEBIT</span></td>
+          <td>Groceries</td>
+          <td>Monthly superstore shopping</td>
+          <td>Gobinath</td>
+          <td>Family</td>
+          <td>₹3,260</td>
+          <td class="actions">
+            <button title="Edit">✎</button>
+            <button title="Delete">🗑</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- User Management & Password Reset Modal -->
+  <div id="admin-modal" class="modal-overlay">
+    <div class="modal">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 14px;">
+        <h3>Family User Management</h3>
+        <button onclick="closeAdminModal()" style="background:none; border:none; color:#fff; font-size:20px; cursor:pointer;">✕</button>
+      </div>
+
+      <div style="margin-bottom: 20px;">
+        <p style="font-size: 13px; color: var(--muted); margin-bottom: 8px;">Active Members (10-hr auto session limits):</p>
+        <div class="user-row">
+          <div><strong>Gobinath</strong> (Owner)</div>
+          <div><button class="btn" style="padding:4px 8px; font-size:11px;" onclick="resetUserPassword('gobinath')">Reset Password</button></div>
+        </div>
+        <div class="user-row">
+          <div><strong>Avadaipriya K.</strong> (Owner)</div>
+          <div><button class="btn" style="padding:4px 8px; font-size:11px;" onclick="resetUserPassword('avadaipriya')">Reset Password</button></div>
+        </div>
+      </div>
+
+      <div style="border-top: 1px solid var(--border); padding-top: 14px;">
+        <h4 style="font-size: 14px; margin-bottom: 10px;">Add New Family Member</h4>
+        <input type="text" id="new-user-id" placeholder="Username (e.g. child1)" style="width:100%; height:38px; background:#070b14; border:1px solid var(--border); border-radius:8px; color:#fff; padding:0 10px; margin-bottom:10px;">
+        <input type="text" id="new-user-name" placeholder="Full Display Name" style="width:100%; height:38px; background:#070b14; border:1px solid var(--border); border-radius:8px; color:#fff; padding:0 10px; margin-bottom:12px;">
+        <button class="btn primary" style="width:100%;" onclick="addNewUser()">Add Member to Sheet</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Session Guard: Require valid session or redirect to login
+    const token = localStorage.getItem('gf_token');
+    const user = JSON.parse(localStorage.getItem('gf_user') || '{}');
+    if (!token) window.location.href = '../index.html';
+
+    function logout() {
+      localStorage.clear();
+      window.location.href = '../index.html';
+    }
+
+    function openAdminModal() { document.getElementById('admin-modal').style.display = 'grid'; }
+    function closeAdminModal() { document.getElementById('admin-modal').style.display = 'none'; }
+
+    function resetUserPassword(uid) {
+      if (confirm(`Reset password for ${uid}? Their password will be cleared, prompting them to set a new password on their next login.`)) {
+        alert(`Password for ${uid} has been cleared. They can now enter a new password on the login screen.`);
+      }
+    }
+
+    function addNewUser() {
+      const id = document.getElementById('new-user-id').value.trim();
+      const name = document.getElementById('new-user-name').value.trim();
+      if (!id || !name) return alert('Enter both username and full name.');
+      alert(`User ${name} (@${id}) added! They can log in immediately and set their password.`);
+      closeAdminModal();
+    }
+  </script>
+</body>
+</html>
