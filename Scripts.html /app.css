@@ -1,0 +1,48 @@
+/* Table Layout for Actions */
+.tx-table th:last-child {
+    text-align: right;
+}
+.tx-table td:last-child {
+    text-align: right;
+    white-space: nowrap;
+}
+
+/* Edit & Delete Transaction Buttons */
+.action-btn {
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 8px;
+    margin-left: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s;
+    opacity: 0.6;
+}
+
+.action-btn:hover {
+    opacity: 1;
+}
+
+.edit-btn {
+    color: var(--blue);
+}
+.edit-btn:hover {
+    background: #2f8cff22;
+}
+
+.del-btn {
+    color: var(--red);
+}
+.del-btn:hover {
+    background: #ff6a7d22;
+}
+
+/* Splitwise UI Form Element Overrides */
+.split-input {
+    background: #06101e !important;
+    border: 1px solid #314a74 !important;
+}
+.split-input:focus {
+    border-color: var(--primary) !important;
+}
