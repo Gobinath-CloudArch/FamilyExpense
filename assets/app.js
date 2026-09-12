@@ -1,123 +1,88 @@
-const form = document.getElementById('transactionForm');
-const amountInput = document.getElementById('txnAmount');
-const scopeSelect = document.getElementById('txnScope');
-const categorySelect = document.getElementById('txnCategory');
-const descriptionInput = document.getElementById('txnDescription');
-const voiceBtn = document.getElementById('voiceBtn');
-const statusMessage = document.getElementById('statusMessage');
-const saveBtn = document.getElementById('saveTxnBtn');
+const API_URL = "https://script.google.com/macros/s/AKfycbwKFk7CfOfJ6kr2tOczkmqZtZvphj2GfAJWl3C-c-Qred37TxlvYV_owLZBSiSTuxVncg/exec";
+let pendingSetupUsername = null;
 
-// Initialize Web Speech API
-const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+const loginForm = document.getElementById('login-form');
+const setupForm = document.getElementById('setup-form');
+const usernameInput = document.getElementById('username');
+const passwordInput = document.getElementById('password');
+const btnLogin = document.getElementById('login-btn');
+const btnSetup = document.getElementById('setup-btn');
 
-if (typeof SpeechRecognition !== "undefined") {
-    const recognition = new SpeechRecognition();
-    recognition.continuous = false;
-    recognition.interimResults = false;
-    recognition.lang = 'en-IN'; 
-
-    let isListening = false;
-
-    voiceBtn.addEventListener('click', () => {
-        if (isListening) {
-            recognition.stop();
-        } else {
-            recognition.start();
-        }
-    });
-
-    recognition.onstart = () => {
-        isListening = true;
-        voiceBtn.textContent = '🛑 Listening... Speak now';
-        voiceBtn.classList.add('recording');
-    };
-
-    recognition.onresult = (event) => {
-        const transcript = event.results[0][0].transcript.toLowerCase();
-        
-        // Parse Amount
-        const amountMatch = transcript.match(/\d+/);
-        if (amountMatch) amountInput.value = amountMatch[0];
-
-        // Parse Scope
-        if (transcript.includes('family') || transcript.includes('shared')) {
-            scopeSelect.value = 'Family';
-        } else if (transcript.includes('personal') || transcript.includes('individual')) {
-            scopeSelect.value = 'Personal';
-        }
-
-        // Parse Category
-        if (transcript.includes('grocery') || transcript.includes('food')) {
-            categorySelect.value = 'Groceries';
-        } else if (transcript.includes('electricity') || transcript.includes('utility')) {
-            categorySelect.value = 'Utilities';
-        } else if (transcript.includes('hospital') || transcript.includes('medicine')) {
-            categorySelect.value = 'Healthcare';
-        }
-
-        // Apply remaining recognized text to Description
-        descriptionInput.value = transcript;
-    };
-
-    recognition.onspeechend = () => {
-        recognition.stop();
-    };
-
-    recognition.onend = () => {
-        isListening = false;
-        voiceBtn.textContent = '🎤 Start Voice Input';
-        voiceBtn.classList.remove('recording');
-    };
-
-    recognition.onerror = (event) => {
-        console.error(`Speech recognition error: ${event.error}`);
-        isListening = false;
-        voiceBtn.textContent = '🎤 Start Voice Input';
-    };
-} else {
-    voiceBtn.style.display = 'none';
-    console.warn("Speech Recognition API not supported in this browser.");
+function toast(msg, isError = false) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.style.background = isError ? '#ff4a4a' : '#39d98a';
+    el.style.display = 'block';
+    setTimeout(() => el.style.display = 'none', 3500);
 }
 
-// Form Submission
-form.addEventListener('submit', async (e) => {
+loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    saveBtn.disabled = true;
-    saveBtn.textContent = 'Saving...';
-    
+    btnLogin.disabled = true;
+    btnLogin.textContent = 'Authenticating...';
+
     const payload = {
-        action: 'addTransaction',
-        amount: amountInput.value,
-        category: categorySelect.value,
-        scope: scopeSelect.value,
-        description: descriptionInput.value,
-        familySplit: "" // Ensures Google Sheet column stays blank
+        action: 'auth',
+        data: { username: usernameInput.value, password: passwordInput.value }
     };
 
     try {
-        const response = await fetch(CONFIG_API_URL, {
+        const response = await fetch(API_URL, {
             method: 'POST',
-            body: JSON.stringify(payload),
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+            body: JSON.stringify(payload)
         });
-
         const result = await response.json();
 
-        if (result.status === 'success') {
-            statusMessage.textContent = 'Transaction saved successfully.';
-            statusMessage.style.color = '#10b981';
-            form.reset();
-            // Call existing function to refresh the ledger view here
-        } else {
-            throw new Error(result.message);
+        if (result.error) throw new Error(result.error);
+        
+        if (result.requiresSetup) {
+            pendingSetupUsername = result.username;
+            loginForm.style.display = 'none';
+            setupForm.style.display = 'block';
+            toast('Account setup required.');
+        } else if (result.ok) {
+            localStorage.setItem('gf_token', result.token);
+            localStorage.setItem('gf_user', JSON.stringify(result.user));
+            window.location.href = './dashboard/index.html';
         }
-    } catch (error) {
-        statusMessage.textContent = 'Error saving transaction.';
-        statusMessage.style.color = '#ef4444';
-        console.error(error);
+    } catch (err) {
+        toast(err.message, true);
     } finally {
-        saveBtn.disabled = false;
-        saveBtn.textContent = 'Save Transaction';
-        setTimeout(() => statusMessage.textContent = '', 3000);
+        btnLogin.disabled = false;
+        btnLogin.textContent = 'Secure Sign In';
+    }
+});
+
+setupForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    btnSetup.disabled = true;
+    btnSetup.textContent = 'Securing Account...';
+
+    const newPassword = document.getElementById('new-password').value;
+
+    const payload = {
+        action: 'setupPassword',
+        data: { username: pendingSetupUsername, password: newPassword }
+    };
+
+    try {
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            body: JSON.stringify(payload)
+        });
+        const result = await response.json();
+
+        if (result.error) throw new Error(result.error);
+        
+        if (result.ok) {
+            localStorage.setItem('gf_token', result.token);
+            localStorage.setItem('gf_user', JSON.stringify(result.user));
+            window.location.href = './dashboard/index.html';
+        }
+    } catch (err) {
+        toast(err.message, true);
+    } finally {
+        btnSetup.disabled = false;
+        btnSetup.textContent = 'Set Password & Login';
     }
 });
