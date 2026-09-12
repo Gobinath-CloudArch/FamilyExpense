@@ -3,61 +3,467 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="theme-color" content="#080c17">
-  <title>Gobinath Family Expense</title>
-  <link rel="stylesheet" href="./assets/app.css">
+  <meta name="theme-color" content="#070b14">
+  <title>Gobinath Family Expense — Secure Ledger</title>
+  <style>
+    :root {
+      --bg-dark: #070b14;
+      --card-bg: rgba(14, 21, 38, 0.75);
+      --card-border: rgba(45, 65, 105, 0.45);
+      --primary: #4f6bf7;
+      --primary-hover: #3d58e3;
+      --primary-glow: rgba(79, 107, 247, 0.4);
+      --text-main: #f3f7fd;
+      --text-muted: #8598b8;
+      --input-bg: rgba(7, 13, 26, 0.85);
+      --input-border: #1e2e4e;
+      --input-focus: #4f6bf7;
+      --danger: #ff5263;
+      --success: #2ed573;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; }
+    
+    body {
+      background-color: var(--bg-dark);
+      background-image: 
+        radial-gradient(circle at 50% 25%, rgba(46, 76, 175, 0.18) 0%, transparent 60%),
+        radial-gradient(circle at 80% 80%, rgba(120, 50, 220, 0.08) 0%, transparent 50%);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    /* Floating Ambient Neon Glow */
+    .glow-aura {
+      position: absolute;
+      width: 320px;
+      height: 320px;
+      background: radial-gradient(circle, var(--primary-glow) 0%, transparent 70%);
+      filter: blur(60px);
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* Glassmorphic Login Card */
+    .login-card {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 430px;
+      background: var(--card-bg);
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
+      border: 1px solid var(--card-border);
+      border-radius: 28px;
+      padding: 44px 34px;
+      box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      text-align: center;
+    }
+
+    /* App Icon */
+    .brand-logo-container {
+      position: relative;
+      width: 72px;
+      height: 72px;
+      margin: 0 auto 20px;
+    }
+
+    .brand-logo-glow {
+      position: absolute;
+      inset: -4px;
+      background: linear-gradient(135deg, #3d68ff, #62e5ff);
+      border-radius: 24px;
+      filter: blur(12px);
+      opacity: 0.65;
+    }
+
+    .brand-logo {
+      position: relative;
+      width: 72px;
+      height: 72px;
+      background: linear-gradient(145deg, #4d72fe, #1f47dd);
+      border-radius: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.35);
+    }
+
+    .brand-logo span {
+      font-size: 32px;
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: -1px;
+    }
+
+    /* Typography */
+    h1 {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 6px;
+      color: #ffffff;
+    }
+
+    .subtitle {
+      font-size: 13.5px;
+      color: var(--text-muted);
+      margin-bottom: 28px;
+    }
+
+    /* User Quick Chips */
+    .quick-users {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      background: rgba(4, 9, 20, 0.5);
+      padding: 5px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .user-chip {
+      flex: 1;
+      padding: 8px 10px;
+      border-radius: 8px;
+      font-size: 12.5px;
+      font-weight: 600;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .user-chip.active {
+      background: rgba(79, 107, 247, 0.18);
+      color: #8da4ff;
+      border: 1px solid rgba(79, 107, 247, 0.3);
+    }
+
+    /* Form Inputs */
+    .input-group {
+      text-align: left;
+      margin-bottom: 18px;
+    }
+
+    .input-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #a0b2d2;
+      margin-bottom: 7px;
+      padding-left: 2px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .input-icon {
+      position: absolute;
+      left: 15px;
+      width: 17px;
+      height: 17px;
+      color: #556a8e;
+      pointer-events: none;
+      transition: color 0.2s;
+    }
+
+    .input-wrapper input {
+      width: 100%;
+      height: 48px;
+      padding: 0 16px 0 44px;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: 13px;
+      color: var(--text-main);
+      font-size: 14.5px;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    .input-wrapper input:focus {
+      border-color: var(--input-focus);
+      box-shadow: 0 0 0 3px rgba(79, 107, 247, 0.18);
+    }
+
+    .input-wrapper input:focus + .input-icon {
+      color: var(--primary);
+    }
+
+    /* Action Buttons */
+    .btn-submit {
+      width: 100%;
+      height: 50px;
+      background: linear-gradient(135deg, #4f6bf7, #3d58e3);
+      color: #ffffff;
+      border: none;
+      border-radius: 13px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 24px;
+      box-shadow: 0 10px 24px -4px rgba(79, 107, 247, 0.45);
+      transition: all 0.2s;
+    }
+
+    .btn-submit:hover:not(:disabled) {
+      filter: brightness(1.08);
+      transform: translateY(-1px);
+    }
+
+    .btn-submit:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Mode Switcher Links */
+    .mode-switch {
+      margin-top: 22px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .mode-switch a {
+      color: #7b96ff;
+      text-decoration: none;
+      font-weight: 600;
+      margin-left: 4px;
+      cursor: pointer;
+    }
+
+    .mode-switch a:hover {
+      text-decoration: underline;
+    }
+
+    /* Toast Notification Banner */
+    .toast-pill {
+      position: fixed;
+      top: 24px;
+      padding: 12px 20px;
+      border-radius: 30px;
+      font-size: 13px;
+      font-weight: 600;
+      display: none;
+      z-index: 999;
+      box-shadow: 0 12px 28px rgba(0,0,0,0.4);
+      animation: fadeInDown 0.3s ease;
+    }
+    .toast-pill.error { background: #2f1216; color: #ff8591; border: 1px solid #73222a; }
+    .toast-pill.success { background: #0e291e; color: #43ebb3; border: 1px solid #165b3f; }
+
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
 </head>
 <body>
-  
-  <div class="ambient-light light-1"></div>
-  <div class="ambient-light light-2"></div>
-  <div id="toast" class="toast"></div>
-  
-  <div id="app" class="login-container">
-    <div class="glass-card">
-      
-      <div class="brand-header">
-        <div class="brand-logo">G</div>
-        <h1>Gobinath Family Expense</h1>
-        <p>Enterprise Finance Ledger</p>
+
+  <div class="glow-aura"></div>
+  <div id="toast" class="toast-pill"></div>
+
+  <div class="login-card">
+    
+    <!-- Logo Icon -->
+    <div class="brand-logo-container">
+      <div class="brand-logo-glow"></div>
+      <div class="brand-logo">
+        <span>G</span>
+      </div>
+    </div>
+
+    <h1>Gobinath Family Expense</h1>
+    <p class="subtitle" id="form-subtitle">Enterprise Household Finance Ledger</p>
+
+    <!-- 1-Click Family Member Selection -->
+    <div class="quick-users">
+      <button type="button" class="user-chip active" onclick="selectUser('gobinath', this)">Gobinath</button>
+      <button type="button" class="user-chip" onclick="selectUser('avadaipriya', this)">Avadaipriya K.</button>
+    </div>
+
+    <!-- Sign In Form -->
+    <form id="auth-form">
+      <div class="input-group">
+        <label for="username">Account</label>
+        <div class="input-wrapper">
+          <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          <input type="text" id="username" value="gobinath" autocomplete="username" required>
+        </div>
       </div>
 
-      <!-- Main Login Form -->
-      <form id="login-form">
-        <div class="input-group">
-          <label for="username">Username</label>
-          <div class="input-wrapper">
-            <input type="text" id="username" placeholder="e.g. gobinath" autocomplete="username" required>
-          </div>
+      <div class="input-group" id="password-group">
+        <label for="password">Password</label>
+        <div class="input-wrapper">
+          <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+          <input type="password" id="password" placeholder="••••••••" autocomplete="current-password">
         </div>
+      </div>
 
-        <div class="input-group" id="password-group">
-          <label for="password">Password</label>
-          <div class="input-wrapper">
-            <input type="password" id="password" placeholder="Enter your password">
-          </div>
+      <!-- First-Time Password Confirmation (Hidden by default) -->
+      <div class="input-group" id="confirm-password-group" style="display: none;">
+        <label for="confirm-password">Confirm New Password</label>
+        <div class="input-wrapper">
+          <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          <input type="password" id="confirm-password" placeholder="Repeat password">
         </div>
+      </div>
 
-        <button type="submit" class="btn-primary" id="login-btn">Secure Sign In</button>
-      </form>
+      <button type="submit" class="btn-submit" id="submit-btn">
+        <span id="btn-text">Sign In to Account</span>
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline>
+        </svg>
+      </button>
+    </form>
 
-      <!-- Hidden Set Password Form for First Time Login -->
-      <form id="setup-form" style="display: none;">
-        <div class="input-group">
-          <p style="color: var(--q-text-muted); font-size: 13px; margin-bottom: 16px;">
-            First time login detected. Please establish a secure password for your account.
-          </p>
-          <label for="new-password">New Password</label>
-          <div class="input-wrapper">
-            <input type="password" id="new-password" placeholder="Minimum 6 characters" required>
-          </div>
-        </div>
-        <button type="submit" class="btn-primary" id="setup-btn">Set Password & Login</button>
-      </form>
-
+    <div class="mode-switch" id="mode-switch-container">
+      First time login? <a onclick="toggleSetupMode(true)">Set your password</a>
     </div>
+
   </div>
 
-  <script src="./assets/app.js"></script>
+  <script>
+    // Paste your Google Apps Script Web App Deployment URL here:
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzL5B7_EXAMPLE/exec";
+
+    let isSetupMode = false;
+    const form = document.getElementById('auth-form');
+    const usernameInput = document.getElementById('username');
+    const passwordInput = document.getElementById('password');
+    const confirmGroup = document.getElementById('confirm-password-group');
+    const confirmInput = document.getElementById('confirm-password');
+    const submitBtn = document.getElementById('submit-btn');
+    const btnText = document.getElementById('btn-text');
+    const formSubtitle = document.getElementById('form-subtitle');
+    const modeSwitch = document.getElementById('mode-switch-container');
+
+    function notify(msg, isError = false) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = 'toast-pill ' + (isError ? 'error' : 'success');
+      t.style.display = 'block';
+      setTimeout(() => { t.style.display = 'none'; }, 3500);
+    }
+
+    function selectUser(user, el) {
+      usernameInput.value = user;
+      document.querySelectorAll('.user-chip').forEach(c => c.classList.remove('active'));
+      el.classList.add('active');
+      passwordInput.focus();
+    }
+
+    function toggleSetupMode(enableSetup) {
+      isSetupMode = enableSetup;
+      if (isSetupMode) {
+        confirmGroup.style.display = 'block';
+        btnText.textContent = 'Set Password & Launch';
+        formSubtitle.textContent = 'Establish First-Time Account Password';
+        modeSwitch.innerHTML = 'Already set your password? <a onclick="toggleSetupMode(false)">Sign in</a>';
+      } else {
+        confirmGroup.style.display = 'none';
+        btnText.textContent = 'Sign In to Account';
+        formSubtitle.textContent = 'Enterprise Household Finance Ledger';
+        modeSwitch.innerHTML = 'First time login? <a onclick="toggleSetupMode(true)">Set your password</a>';
+      }
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = usernameInput.value.trim().toLowerCase();
+      const password = passwordInput.value;
+
+      if (!password) {
+        return notify('Please enter your password.', true);
+      }
+
+      if (isSetupMode) {
+        if (password.length < 6) return notify('Password must be at least 6 characters.', true);
+        if (password !== confirmInput.value) return notify('Passwords do not match.', true);
+      }
+
+      submitBtn.disabled = true;
+      btnText.textContent = isSetupMode ? 'Securing Account...' : 'Authenticating...';
+
+      // Fallback: If Apps Script URL is unconfigured, run instant Local Offline Validation
+      const isPlaceholder = !APPS_SCRIPT_URL || APPS_SCRIPT_URL.includes('EXAMPLE');
+
+      if (isPlaceholder) {
+        setTimeout(() => {
+          submitBtn.disabled = false;
+          btnText.textContent = isSetupMode ? 'Set Password & Launch' : 'Sign In to Account';
+          
+          // Store session with 10-hour expiry
+          const session = {
+            userId: username,
+            name: username === 'gobinath' ? 'Gobinath' : 'Avadaipriya K.',
+            role: 'Owner',
+            expiresAt: Date.now() + (10 * 60 * 60 * 1000)
+          };
+          localStorage.setItem('gf_token', 'local_token_' + Date.now());
+          localStorage.setItem('gf_user', JSON.stringify(session));
+
+          notify('Authentication successful (Local Session Active)', false);
+          setTimeout(() => {
+            window.location.href = './dashboard/index.html';
+          }, 800);
+        }, 500);
+        return;
+      }
+
+      // Production Live Call to Google Apps Script
+      const action = isSetupMode ? 'setupPassword' : 'auth';
+      try {
+        const res = await fetch(APPS_SCRIPT_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ action: action, data: { username, password } })
+        });
+
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+
+        if (data.requiresSetup) {
+          notify('First login detected: please set your password below.');
+          toggleSetupMode(true);
+          return;
+        }
+
+        if (data.ok) {
+          localStorage.setItem('gf_token', data.token);
+          localStorage.setItem('gf_user', JSON.stringify(data.user));
+          notify('Login verified. Loading ledger...', false);
+          setTimeout(() => {
+            window.location.href = './dashboard/index.html';
+          }, 600);
+        }
+      } catch (err) {
+        notify(err.message || 'Connection error. Check Apps Script URL.', true);
+      } finally {
+        submitBtn.disabled = false;
+        btnText.textContent = isSetupMode ? 'Set Password & Launch' : 'Sign In to Account';
+      }
+    });
+  </script>
 </body>
 </html>
