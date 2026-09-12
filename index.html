@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enterprise Family Finance</title>
+    <link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <h2>Transaction Ledger</h2>
+            <button type="button" id="voiceBtn" class="btn-voice">🎤 Start Voice Input</button>
+        </header>
+
+        <form id="transactionForm" class="transaction-form">
+            <div class="form-row">
+                <div class="input-group">
+                    <label for="txnAmount">Amount (₹)</label>
+                    <input type="number" id="txnAmount" step="0.01" required>
+                </div>
+                
+                <div class="input-group">
+                    <label for="txnScope">Scope</label>
+                    <select id="txnScope" required>
+                        <option value="Personal">Personal</option>
+                        <option value="Family">Family</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="input-group">
+                    <label for="txnCategory">Category</label>
+                    <select id="txnCategory" required>
+                        <option value="">Select Category...</option>
+                        <option value="Groceries">Groceries</option>
+                        <option value="Utilities">Utilities</option>
+                        <option value="Transportation">Transportation</option>
+                        <option value="Healthcare">Healthcare</option>
+                        <option value="Entertainment">Entertainment</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="input-group">
+                    <label for="txnDescription">Description / Notes</label>
+                    <input type="text" id="txnDescription" placeholder="Optional notes">
+                </div>
+            </div>
+
+            <div class="action-row">
+                <button type="submit" id="saveTxnBtn" class="btn-save">Save Transaction</button>
+                <div id="statusMessage" class="status-indicator"></div>
+            </div>
+        </form>
+        
+        <!-- Existing Edit/Delete UI renders below here -->
+        <div id="ledgerView"></div>
+    </div>
+    
+    <script src="assets/config.js"></script>
+    <script src="assets/app.js"></script>
+</body>
+</html>
