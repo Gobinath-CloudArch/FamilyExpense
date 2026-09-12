@@ -3,12 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gobinath Family Expense — Advanced Dashboard</title>
+  <title>Gobinath Family Expense — Enterprise Dashboard</title>
   <style>
     :root {
       --bg: #070b14;
+      --sidebar: #090f1d;
       --panel: rgba(14, 21, 38, 0.85);
-      --border: #223456;
+      --border: #1e2e4e;
       --primary: #4f6bf7;
       --primary-hover: #3d58e3;
       --text: #f3f7fd;
@@ -17,326 +18,692 @@
       --red: #ff5263;
       --warn: #fbc531;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, sans-serif; }
-    body { background: var(--bg); color: var(--text); padding: 24px; min-height: 100vh; }
-    
-    /* Layout & Header */
-    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
-    .brand { font-size: 20px; font-weight: 800; display: flex; align-items: center; gap: 10px; }
-    .brand-icon { width: 32px; height: 32px; background: var(--primary); border-radius: 8px; display: grid; place-items: center; font-weight: 900; }
-    .btn { background: #131f38; border: 1px solid var(--border); color: #fff; padding: 9px 16px; border-radius: 10px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background: var(--bg); color: var(--text); display: flex; min-height: 100vh; overflow-x: hidden; }
+
+    /* Left Sidebar Navigation */
+    .sidebar {
+      width: 260px;
+      background: var(--sidebar);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 24px 16px;
+      flex-shrink: 0;
+    }
+
+    .brand-box {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 8px 24px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 20px;
+    }
+
+    .brand-icon {
+      width: 38px;
+      height: 38px;
+      background: linear-gradient(135deg, #4d72fe, #1f47dd);
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      font-size: 18px;
+      box-shadow: 0 6px 14px rgba(79, 107, 247, 0.35);
+    }
+
+    .brand-title { font-size: 15px; font-weight: 700; line-height: 1.2; }
+    .brand-title span { display: block; font-size: 11px; color: var(--muted); font-weight: 400; }
+
+    .nav-list { display: flex; flex-direction: column; gap: 6px; flex: 1; }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      color: var(--muted);
+      font-size: 13.5px;
+      font-weight: 600;
+      background: transparent;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: left;
+    }
+
+    .nav-item:hover { color: var(--text); background: rgba(255, 255, 255, 0.04); }
+    .nav-item.active {
+      background: rgba(79, 107, 247, 0.16);
+      color: #9cb1ff;
+      border-color: rgba(79, 107, 247, 0.3);
+    }
+
+    .user-footer {
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .user-tag strong { display: block; font-size: 13px; }
+    .user-tag small { color: var(--muted); font-size: 11px; }
+
+    /* Main Content Area */
+    .main { flex: 1; padding: 28px 32px; overflow-y: auto; }
+
+    .top-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 28px;
+    }
+
+    .top-header h2 { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; }
+    .top-header p { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+    .header-btns { display: flex; gap: 10px; }
+    .btn {
+      padding: 10px 18px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 13.5px;
+      border: 1px solid var(--border);
+      background: #11192b;
+      color: var(--text);
+      cursor: pointer;
+      transition: 0.2s;
+    }
     .btn.primary { background: var(--primary); border: none; }
     .btn:hover { filter: brightness(1.15); }
-    
-    /* Advanced Stats Grid */
-    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
-    .stat-card { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
-    .stat-title { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
-    .stat-val { font-size: 24px; font-weight: 800; }
-    .stat-val.income { color: var(--green); }
-    .stat-val.expense { color: var(--red); }
-    .stat-val.cc { color: var(--warn); }
-    
-    /* Ledger Table */
-    .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 18px; padding: 22px; overflow-x: auto; }
-    .panel-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
-    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13.5px; min-width: 800px; }
-    th { color: var(--muted); padding: 12px 10px; border-bottom: 1px solid var(--border); text-transform: uppercase; font-size: 11px; }
-    td { padding: 14px 10px; border-bottom: 1px solid rgba(255,255,255,0.05); }
-    .badge { padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; }
+
+    /* KPI Grid */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .kpi-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+    }
+
+    .kpi-label { font-size: 11.5px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; font-weight: 700; }
+    .kpi-val { font-size: 26px; font-weight: 800; letter-spacing: -0.02em; }
+    .kpi-val.inc { color: var(--green); }
+    .kpi-val.exp { color: var(--red); }
+    .kpi-val.cc { color: var(--warn); }
+
+    /* Panels & Tables */
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 22px;
+      margin-bottom: 24px;
+    }
+
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+
+    .panel-head h3 { font-size: 16px; font-weight: 700; }
+
+    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
+    th { color: var(--muted); padding: 12px 10px; border-bottom: 1px solid var(--border); font-size: 11px; text-transform: uppercase; }
+    td { padding: 14px 10px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+
+    .badge { padding: 4px 8px; border-radius: 6px; font-size: 10.5px; font-weight: 700; }
     .badge.debit { background: rgba(255,82,99,0.15); color: var(--red); }
     .badge.credit { background: rgba(46,213,115,0.15); color: var(--green); }
-    .pay-method { font-size: 11px; padding: 3px 6px; border: 1px solid var(--border); border-radius: 4px; color: var(--muted); }
-    .actions button { background: none; border: none; cursor: pointer; font-size: 15px; margin-left: 6px; opacity: 0.7; color: var(--text); }
-    .actions button:hover { opacity: 1; color: var(--primary); }
+    .pay-pill { font-size: 11px; padding: 2px 7px; border: 1px solid var(--border); border-radius: 5px; color: var(--muted); }
 
-    /* Advanced Transaction Modal */
-    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); display: none; place-items: center; z-index: 100; }
-    .modal { background: #0c1220; border: 1px solid var(--border); border-radius: 16px; width: 100%; max-width: 600px; padding: 24px; max-height: 90vh; overflow-y: auto; }
+    .action-btn {
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 15px;
+      margin-left: 6px;
+      padding: 4px;
+      transition: color 0.2s;
+    }
+    .action-btn:hover { color: var(--primary); }
+
+    /* Budget Progress Bars */
+    .budget-row { margin-bottom: 16px; }
+    .budget-info { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; }
+    .bar-bg { width: 100%; height: 8px; background: #131b2e; border-radius: 6px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 6px; transition: width 0.3s; }
+
+    /* Modal System */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(6px);
+      display: none;
+      place-items: center;
+      z-index: 100;
+    }
+    .modal {
+      background: #0d1424;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      width: 100%;
+      max-width: 580px;
+      padding: 26px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
     .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-    .modal-header h3 { font-size: 20px; font-weight: 700; }
-    .modal-header .sub { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
-    
-    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px; }
     .form-group { display: flex; flex-direction: column; gap: 6px; }
     .form-group.full { grid-column: 1 / -1; }
-    .form-group label { font-size: 12px; font-weight: 600; color: var(--muted); }
+    .form-group label { font-size: 11.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; }
     
-    .form-control { background: #11192b; border: 1px solid var(--border); color: #fff; padding: 12px 14px; border-radius: 8px; font-size: 14px; outline: none; }
-    .form-control:focus { border-color: var(--primary); }
-    select.form-control { appearance: none; background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%238598b8%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E"); background-repeat: no-repeat; background-position: right 14px top 50%; background-size: 10px auto; }
-    
-    /* Split UI */
-    .split-box { background: #11192b; border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-bottom: 20px; display: none; }
-    .split-row { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
-    .split-row input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--primary); }
-    .split-row input[type="number"] { width: 100px; background: #070b14; border: 1px solid var(--border); color: #fff; padding: 6px; border-radius: 4px; text-align: right; }
-    
-    .btn-submit { width: 100%; padding: 14px; background: var(--primary); border: none; border-radius: 8px; color: #fff; font-weight: 700; font-size: 15px; cursor: pointer; transition: 0.2s; }
-    .btn-submit:hover { background: var(--primary-hover); }
+    .form-ctrl {
+      background: #121a2d;
+      border: 1px solid var(--border);
+      color: #fff;
+      padding: 11px 14px;
+      border-radius: 10px;
+      font-size: 14px;
+      outline: none;
+    }
+    .form-ctrl:focus { border-color: var(--primary); }
 
-    /* Custom Scrollbar for Category Dropdown */
-    ::-webkit-scrollbar { width: 8px; height: 8px; }
-    ::-webkit-scrollbar-track { background: var(--bg); }
-    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+    /* Splitwise Block */
+    .split-box {
+      background: #11192c;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 18px;
+    }
+    .split-item { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; font-size: 13px; }
+    .split-item input[type="number"] { width: 110px; padding: 6px 8px; background: #080d1a; border: 1px solid var(--border); color: #fff; border-radius: 6px; text-align: right; }
   </style>
 </head>
 <body>
 
-  <div class="header">
-    <div class="brand">
+  <!-- Left Sidebar Navigation -->
+  <aside class="sidebar">
+    <div class="brand-box">
       <div class="brand-icon">G</div>
-      <div>Gobinath Family Expense</div>
+      <div class="brand-title">
+        Gobinath Family
+        <span>Enterprise Workspace</span>
+      </div>
     </div>
-    <div class="top-btns">
-      <button class="btn" onclick="logout()">Logout</button>
-    </div>
-  </div>
 
-  <div class="stats">
-    <div class="stat-card">
-      <div class="stat-title">Net Balance</div>
-      <div class="stat-val" id="kpi-net">₹0</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-title">Total Income</div>
-      <div class="stat-val income" id="kpi-income">₹0</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-title">Total Expense</div>
-      <div class="stat-val expense" id="kpi-expense">₹0</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-title">Credit Card Dues</div>
-      <div class="stat-val cc" id="kpi-cc">₹0</div>
-    </div>
-  </div>
+    <nav class="nav-list">
+      <button class="nav-item active" onclick="navigate('overview', this)">
+        <span>⌂</span> Overview
+      </button>
+      <button class="nav-item" onclick="navigate('expenses', this)">
+        <span>💸</span> Expenses (Debits)
+      </button>
+      <button class="nav-item" onclick="navigate('income', this)">
+        <span>💰</span> Income (Credits)
+      </button>
+      <button class="nav-item" onclick="navigate('budget', this)">
+        <span>📊</span> Budget & Targets
+      </button>
+      <button class="nav-item" onclick="navigate('settlement', this)">
+        <span>⇄</span> Split & Settlement
+      </button>
+      <button class="nav-item" onclick="navigate('settings', this)">
+        <span>⚙</span> Settings & Members
+      </button>
+    </nav>
 
-  <div class="panel">
-    <div class="panel-head">
-      <h3>Family Ledger</h3>
-      <button class="btn primary" onclick="openTxModal()">+ Add Entry</button>
+    <div class="user-footer">
+      <div class="user-tag">
+        <strong id="logged-user-name">Gobinath</strong>
+        <small>10-hr Session Active</small>
+      </div>
+      <button class="btn" style="padding: 5px 10px; font-size: 11px;" onclick="logout()">Logout</button>
     </div>
-    <table>
-      <thead>
-        <tr>
-          <th>Date</th>
-          <th>Type</th>
-          <th>Category</th>
-          <th>Description</th>
-          <th>Pay Method</th>
-          <th>Scope</th>
-          <th>Amount</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody id="ledger-body">
-        <!-- Rendered via JS -->
-      </tbody>
-    </table>
-  </div>
+  </aside>
 
-  <!-- Advanced Transaction Modal -->
+  <!-- Main View Container -->
+  <main class="main">
+    <div class="top-header">
+      <div>
+        <h2 id="view-title">Family Finance Overview</h2>
+        <p id="view-sub">Income, expenses, utilities and shared cash flow in one place.</p>
+      </div>
+      <div class="header-btns">
+        <button class="btn" onclick="openTxModal('CREDIT')">+ Add Income</button>
+        <button class="btn primary" onclick="openTxModal('DEBIT')">+ Add Expense</button>
+      </div>
+    </div>
+
+    <!-- KPI Metric Blocks -->
+    <section class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">Net Balance</div>
+        <div class="kpi-val" id="kpi-net">₹0</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Total Income</div>
+        <div class="kpi-val inc" id="kpi-income">₹0</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Total Expenses</div>
+        <div class="kpi-val exp" id="kpi-expense">₹0</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Credit Card Dues</div>
+        <div class="kpi-val cc" id="kpi-cc">₹0</div>
+      </div>
+    </section>
+
+    <!-- Dynamic Container for Active Menu View -->
+    <div id="view-container"></div>
+  </main>
+
+  <!-- Transaction Add / Edit Modal -->
   <div id="tx-modal" class="modal-overlay">
     <div class="modal">
       <div class="modal-header">
-        <div>
-          <div class="sub" id="modal-sub">NEW ENTRY · Family</div>
-          <h3 id="modal-title">Add transaction</h3>
-        </div>
-        <button onclick="closeTxModal()" style="background:none; border:none; color:var(--muted); font-size:24px; cursor:pointer;">×</button>
+        <h3 id="modal-heading">Add Transaction</h3>
+        <button onclick="closeTxModal()" style="background:none; border:none; color:var(--muted); font-size:22px; cursor:pointer;">×</button>
       </div>
 
       <form id="tx-form">
         <input type="hidden" id="tx-id">
-        
+
         <div class="form-grid">
           <div class="form-group full">
-            <label>Description</label>
-            <input type="text" id="tx-desc" class="form-control" placeholder="Dinner, party, movie, gift..." required>
-          </div>
-          
-          <div class="form-group">
-            <label>Amount (₹)</label>
-            <input type="number" step="0.01" id="tx-amount" class="form-control" placeholder="0.00" required>
-          </div>
-          
-          <div class="form-group">
-            <label>Date</label>
-            <input type="date" id="tx-date" class="form-control" required>
+            <label>Description / Notes</label>
+            <input type="text" id="tx-desc" class="form-ctrl" placeholder="e.g. Monthly Rent, Supermarket, Salary" required>
           </div>
 
           <div class="form-group">
-            <label>Entry Type</label>
-            <select id="tx-type" class="form-control" onchange="updateCategories()">
-              <option value="DEBIT">Expense</option>
-              <option value="CREDIT">Income</option>
+            <label>Amount (₹)</label>
+            <input type="number" step="0.01" id="tx-amount" class="form-ctrl" placeholder="0.00" required oninput="calculateSplit()">
+          </div>
+
+          <div class="form-group">
+            <label>Date</label>
+            <input type="date" id="tx-date" class="form-ctrl" required>
+          </div>
+
+          <div class="form-group">
+            <label>Transaction Type</label>
+            <select id="tx-type" class="form-ctrl" onchange="renderCategoryOptions()">
+              <option value="DEBIT">Expense (Debit)</option>
+              <option value="CREDIT">Income (Credit)</option>
             </select>
           </div>
 
           <div class="form-group">
             <label>Payment Method</label>
-            <select id="tx-method" class="form-control">
+            <select id="tx-method" class="form-ctrl">
               <option value="UPI">UPI / GPay</option>
               <option value="Credit Card">Credit Card</option>
               <option value="Debit Card">Debit Card</option>
-              <option value="Cash">Cash</option>
               <option value="Net Banking">Net Banking</option>
+              <option value="Cash">Cash</option>
             </select>
           </div>
 
           <div class="form-group full">
             <label>Category</label>
-            <select id="tx-category" class="form-control" required>
-              <!-- Populated via JS -->
-            </select>
+            <select id="tx-category" class="form-ctrl" required></select>
           </div>
-          
+
           <div class="form-group full">
             <label>Scope</label>
-            <select id="tx-scope" class="form-control" onchange="toggleSplitUI()">
-              <option value="Family">Family (Shared Ledger)</option>
+            <select id="tx-scope" class="form-ctrl" onchange="toggleSplitBox()">
+              <option value="Family">Family (Shared)</option>
               <option value="Personal">Personal</option>
             </select>
           </div>
         </div>
 
-        <!-- Splitwise style block -->
+        <!-- Splitwise Box -->
         <div class="split-box" id="split-box">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-            <label>Split Details</label>
-            <select id="split-type" class="form-control" style="width: 140px; padding: 6px; font-size: 12px;" onchange="calculateSplit()">
-              <option value="EQUAL">Equal split</option>
-              <option value="MANUAL">Manual exact</option>
-            </select>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <strong style="font-size: 12px; color: var(--muted); text-transform: uppercase;">Family Split Verification</strong>
+            <span id="split-status" style="font-size: 11px; color: var(--green);">Equal (50/50)</span>
           </div>
-          
-          <div class="split-row">
-            <div style="display: flex; align-items: center; gap: 10px;">
-              <input type="checkbox" id="split-gobinath" checked onchange="calculateSplit()">
-              <span>Gobinath</span>
-            </div>
-            <input type="number" id="val-gobinath" step="0.01" readonly>
+
+          <div class="split-item">
+            <span>Gobinath</span>
+            <input type="number" id="split-gobinath" step="0.01">
           </div>
-          
-          <div class="split-row">
-            <div style="display: flex; align-items: center; gap: 10px;">
-              <input type="checkbox" id="split-avadaipriya" checked onchange="calculateSplit()">
-              <span>Avadaipriya K.</span>
-            </div>
-            <input type="number" id="val-avadaipriya" step="0.01" readonly>
+          <div class="split-item">
+            <span>Avadaipriya K.</span>
+            <input type="number" id="split-avadaipriya" step="0.01">
           </div>
         </div>
 
-        <button type="submit" class="btn-submit" id="btn-save">Add to shared ledger</button>
+        <button type="submit" class="btn primary" style="width: 100%; height: 48px; margin-top: 10px;">Save to Shared Ledger</button>
       </form>
     </div>
   </div>
 
   <script>
-    // State & Mock Data (Will integrate with Apps Script Backend)
-    let transactions = [
-      { id: 't1', date: '2026-09-12', type: 'DEBIT', category: 'Groceries', desc: 'Monthly superstore shopping', method: 'Credit Card', scope: 'Family', amount: 3260, split: 'Gobinath: 1630 | Avadaipriya K.: 1630' },
-      { id: 't2', date: '2026-09-11', type: 'DEBIT', category: 'Electricity', desc: 'TNEB Bill', method: 'UPI', scope: 'Family', amount: 1450, split: 'Gobinath: 725 | Avadaipriya K.: 725' },
-      { id: 't3', date: '2026-09-01', type: 'CREDIT', category: 'Salary', desc: 'September Salary', method: 'Net Banking', scope: 'Personal', amount: 68000, split: '' }
-    ];
+    // Session Guard: Enforce 10-Hour Expiry
+    const session = JSON.parse(localStorage.getItem('gf_user') || 'null');
+    if (!session || Date.now() > session.expiresAt) {
+      localStorage.clear();
+      window.location.href = '../index.html';
+    }
+    document.getElementById('logged-user-name').textContent = session.name;
 
-    const expCategories = ['Food', 'Dining', 'Party', 'Treat', 'Gift', 'Movie', 'Snacks', 'Travel', 'Transport', 'Fuel', 'Hotel', 'Tickets', 'Entertainment', 'Shopping', 'Groceries', 'Bills', 'Electricity', 'Internet', 'Rent', 'Parking', 'Education', 'Healthcare', 'Childcare'];
-    const incCategories = ['Salary', 'Bonus', 'Reimbursement', 'Gift Received', 'Investment Return'];
-
-    // Initialization
-    document.getElementById('tx-date').valueAsDate = new Date();
-    updateCategories();
-    renderDashboard();
-
-    // UI Updates
-    function updateCategories() {
-      const type = document.getElementById('tx-type').value;
-      const catSelect = document.getElementById('tx-category');
-      const cats = type === 'DEBIT' ? expCategories : incCategories;
-      catSelect.innerHTML = cats.map(c => `<option value="${c}">${c}</option>`).join('');
+    function logout() {
+      localStorage.clear();
+      window.location.href = '../index.html';
     }
 
-    function toggleSplitUI() {
+    // Exhaustive Categories
+    const expenseCategories = [
+      'Rent Paid', 'Groceries', 'Electricity (EB)', 'Fuel / Petrol', 'Dining Out', 
+      'Food Delivery', 'Mobile / Recharge', 'Internet / Broadband', 'Water', 'Gas / Cylinder',
+      'School / Education', 'Childcare', 'Medical / Pharmacy', 'Clothing / Shopping', 
+      'Travel / Fastag', 'Vehicle Maintenance', 'Home Maintenance', 'Subscriptions (OTT)', 
+      'Entertainment / Movie', 'Gifts Given', 'Emergency', 'Other Expense'
+    ];
+
+    const incomeCategories = [
+      'Salary Received', 'Rent Received', 'Bonus', 'Reimbursement', 
+      'Interest / Dividend', 'Gift Received', 'Freelance / Other'
+    ];
+
+    // Core Ledger Data (Synchronized across all menu views)
+    let ledger = JSON.parse(localStorage.getItem('gf_ledger')) || [
+      { id: '1', date: '2026-09-12', type: 'DEBIT', category: 'Rent Paid', desc: 'Monthly Flat Rent', method: 'Net Banking', scope: 'Family', amount: 18000, user: 'Gobinath', split: 'Gobinath: 9000 | Avadaipriya K.: 9000' },
+      { id: '2', date: '2026-09-11', type: 'CREDIT', category: 'Salary Received', desc: 'Monthly Salary Credit', method: 'Net Banking', scope: 'Personal', amount: 68000, user: 'Gobinath', split: '' },
+      { id: '3', date: '2026-09-10', type: 'DEBIT', category: 'Groceries', desc: 'Supermarket supplies', method: 'Credit Card', scope: 'Family', amount: 3260, user: 'Avadaipriya K.', split: 'Gobinath: 1630 | Avadaipriya K.: 1630' },
+      { id: '4', date: '2026-09-08', type: 'DEBIT', category: 'Electricity (EB)', desc: 'TNEB Electricity Bill', method: 'UPI', scope: 'Family', amount: 2140, user: 'Gobinath', split: 'Gobinath: 1070 | Avadaipriya K.: 1070' },
+      { id: '5', date: '2026-09-05', type: 'CREDIT', category: 'Rent Received', desc: 'Family property tenant rent', method: 'UPI', scope: 'Family', amount: 12000, user: 'Avadaipriya K.', split: '' }
+    ];
+
+    let currentView = 'overview';
+
+    function saveLedger() {
+      localStorage.setItem('gf_ledger', JSON.stringify(ledger));
+      updateKPICards();
+    }
+
+    function updateKPICards() {
+      let inc = 0, exp = 0, cc = 0;
+      ledger.forEach(t => {
+        if (t.type === 'CREDIT') inc += t.amount;
+        if (t.type === 'DEBIT') {
+          exp += t.amount;
+          if (t.method === 'Credit Card') cc += t.amount;
+        }
+      });
+      document.getElementById('kpi-income').textContent = '₹' + inc.toLocaleString('en-IN');
+      document.getElementById('kpi-expense').textContent = '₹' + exp.toLocaleString('en-IN');
+      document.getElementById('kpi-net').textContent = '₹' + (inc - exp).toLocaleString('en-IN');
+      document.getElementById('kpi-cc').textContent = '₹' + cc.toLocaleString('en-IN');
+    }
+
+    // Navigation Switcher
+    function navigate(view, btn) {
+      currentView = view;
+      document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+
+      const container = document.getElementById('view-container');
+      const title = document.getElementById('view-title');
+      const sub = document.getElementById('view-sub');
+
+      if (view === 'overview') {
+        title.textContent = 'Family Finance Overview';
+        sub.textContent = 'Complete day-to-day income and expense ledger.';
+        container.innerHTML = renderLedgerTable(ledger, 'All Recent Transactions');
+      } else if (view === 'expenses') {
+        title.textContent = 'Family Expenses & Debits';
+        sub.textContent = 'Track all spending: Rent Paid, Groceries, EB Bills, Fuel, and Credit Card swipes.';
+        const filtered = ledger.filter(t => t.type === 'DEBIT');
+        container.innerHTML = renderLedgerTable(filtered, 'Recorded Debits');
+      } else if (view === 'income') {
+        title.textContent = 'Family Income & Credits';
+        sub.textContent = 'Salary Received, Rent Received, Dividends, and Reimbursements.';
+        const filtered = ledger.filter(t => t.type === 'CREDIT');
+        container.innerHTML = renderLedgerTable(filtered, 'Recorded Credits');
+      } else if (view === 'budget') {
+        title.textContent = 'Monthly Budget & Targets';
+        sub.textContent = 'Category limits and actual expenditures.';
+        container.innerHTML = renderBudgetView();
+      } else if (view === 'settlement') {
+        title.textContent = 'Splitwise & Member Settlement';
+        sub.textContent = 'Shared obligations balance between Gobinath and Avadaipriya K.';
+        container.innerHTML = renderSettlementView();
+      } else if (view === 'settings') {
+        title.textContent = 'Family Members & Security';
+        sub.textContent = 'Manage active accounts and reset passwords.';
+        container.innerHTML = renderSettingsView();
+      }
+    }
+
+    // HTML Component Generators
+    function renderLedgerTable(items, heading) {
+      if (!items.length) return `<div class="panel"><div class="panel-head"><h3>${heading}</h3></div><p style="color:var(--muted); font-size:13px;">No entries recorded.</p></div>`;
+
+      return `
+        <div class="panel">
+          <div class="panel-head">
+            <h3>${heading} (${items.length})</h3>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Category</th>
+                <th>Description</th>
+                <th>Payment Method</th>
+                <th>Scope</th>
+                <th>Amount</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${items.map(t => `
+                <tr>
+                  <td>${t.date}</td>
+                  <td><span class="badge ${t.type.toLowerCase()}">${t.type}</span></td>
+                  <td><strong>${t.category}</strong></td>
+                  <td>${t.desc}</td>
+                  <td><span class="pay-pill">${t.method}</span></td>
+                  <td>${t.scope}</td>
+                  <td style="font-weight:800; color:${t.type==='CREDIT'?'var(--green)':'var(--red)'};">
+                    ${t.type==='CREDIT'?'+':'-'} ₹${t.amount.toLocaleString('en-IN')}
+                  </td>
+                  <td>
+                    <button class="action-btn" title="Edit" onclick="editTx('${t.id}')">✎</button>
+                    <button class="action-btn" title="Delete" onclick="deleteTx('${t.id}')">🗑</button>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    function renderBudgetView() {
+      const budgets = [
+        { cat: 'Rent Paid', target: 18000 },
+        { cat: 'Groceries', target: 12000 },
+        { cat: 'Electricity (EB)', target: 3000 },
+        { cat: 'Fuel / Petrol', target: 5000 },
+        { cat: 'Dining Out', target: 4000 }
+      ];
+
+      return `
+        <div class="panel">
+          <div class="panel-head"><h3>Monthly Expenditure vs Targets</h3></div>
+          ${budgets.map(b => {
+            const spent = ledger.filter(t => t.type==='DEBIT' && t.category.includes(b.cat.split(' ')[0])).reduce((s,t) => s + t.amount, 0);
+            const pct = Math.min(100, Math.round((spent / b.target) * 100));
+            const color = pct > 90 ? 'var(--red)' : pct > 70 ? 'var(--warn)' : 'var(--green)';
+            return `
+              <div class="budget-row">
+                <div class="budget-info">
+                  <strong>${b.cat}</strong>
+                  <span>₹${spent.toLocaleString('en-IN')} of ₹${b.target.toLocaleString('en-IN')} (${pct}%)</span>
+                </div>
+                <div class="bar-bg"><div class="bar-fill" style="width:${pct}%; background:${color};"></div></div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+    }
+
+    function renderSettlementView() {
+      let gPaid = 0, aPaid = 0;
+      ledger.filter(t => t.scope === 'Family').forEach(t => {
+        if (t.user === 'Gobinath') gPaid += t.amount;
+        if (t.user === 'Avadaipriya K.') aPaid += t.amount;
+      });
+
+      const totalFamily = gPaid + aPaid;
+      const share = totalFamily / 2;
+      const balance = gPaid - share; // positive: Avadaipriya owes Gobinath; negative: vice-versa
+
+      return `
+        <div class="panel">
+          <div class="panel-head"><h3>Shared Family Balance (50/50)</h3></div>
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-bottom: 20px;">
+            <div style="background:#11192c; padding:18px; border-radius:12px;">
+              <div style="font-size:12px; color:var(--muted);">GOBINATH TOTAL PAID</div>
+              <div style="font-size:24px; font-weight:800; margin-top:4px;">₹${gPaid.toLocaleString('en-IN')}</div>
+            </div>
+            <div style="background:#11192c; padding:18px; border-radius:12px;">
+              <div style="font-size:12px; color:var(--muted);">AVADAIPRIYA K. TOTAL PAID</div>
+              <div style="font-size:24px; font-weight:800; margin-top:4px;">₹${aPaid.toLocaleString('en-IN')}</div>
+            </div>
+          </div>
+          <div style="background:#131d34; padding:20px; border-radius:12px; text-align:center;">
+            <div style="font-size:13px; color:var(--muted); text-transform:uppercase;">Settlement Status</div>
+            <div style="font-size:22px; font-weight:800; color:var(--green); margin-top:6px;">
+              ${balance > 0 ? `Avadaipriya K. owes Gobinath ₹${Math.abs(balance).toLocaleString('en-IN')}` :
+                balance < 0 ? `Gobinath owes Avadaipriya K. ₹${Math.abs(balance).toLocaleString('en-IN')}` :
+                'All shared family expenses are fully settled!'}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderSettingsView() {
+      return `
+        <div class="panel">
+          <div class="panel-head"><h3>Active Family Members</h3></div>
+          <p style="color:var(--muted); font-size:13px; margin-bottom:16px;">
+            Configured default users with automatic 10-hour secure session timeouts.
+          </p>
+          <div style="display:flex; justify-content:space-between; padding:14px 0; border-bottom:1px solid var(--border);">
+            <div><strong>Gobinath</strong> (Primary Owner)</div>
+            <button class="btn" style="padding:4px 10px; font-size:11px;" onclick="resetMemberPassword('gobinath')">Reset Password</button>
+          </div>
+          <div style="display:flex; justify-content:space-between; padding:14px 0;">
+            <div><strong>Avadaipriya K.</strong> (Primary Owner)</div>
+            <button class="btn" style="padding:4px 10px; font-size:11px;" onclick="resetMemberPassword('avadaipriya')">Reset Password</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function resetMemberPassword(uid) {
+      if (confirm(`Clear stored password for ${uid}? On their next login, they will be prompted to set a new password.`)) {
+        const stored = JSON.parse(localStorage.getItem('gf_passwords') || '{}');
+        delete stored[uid];
+        localStorage.setItem('gf_passwords', JSON.stringify(stored));
+        alert(`Password for ${uid} cleared.`);
+      }
+    }
+
+    // Modal & Form Operations
+    function renderCategoryOptions() {
+      const type = document.getElementById('tx-type').value;
+      const catSelect = document.getElementById('tx-category');
+      const list = type === 'DEBIT' ? expenseCategories : incomeCategories;
+      catSelect.innerHTML = list.map(c => `<option value="${c}">${c}</option>`).join('');
+    }
+
+    function toggleSplitBox() {
       const scope = document.getElementById('tx-scope').value;
       document.getElementById('split-box').style.display = scope === 'Family' ? 'block' : 'none';
-      if(scope === 'Family') calculateSplit();
+      if (scope === 'Family') calculateSplit();
     }
 
     function calculateSplit() {
       const total = parseFloat(document.getElementById('tx-amount').value) || 0;
-      const type = document.getElementById('split-type').value;
-      
-      const vG = document.getElementById('val-gobinath');
-      const vA = document.getElementById('val-avadaipriya');
-      const cG = document.getElementById('split-gobinath').checked;
-      const cA = document.getElementById('split-avadaipriya').checked;
-
-      if (type === 'EQUAL') {
-        vG.readOnly = true; vA.readOnly = true;
-        let count = (cG ? 1 : 0) + (cA ? 1 : 0);
-        let splitAmt = count > 0 ? (total / count).toFixed(2) : 0;
-        
-        vG.value = cG ? splitAmt : 0;
-        vA.value = cA ? splitAmt : 0;
-      } else {
-        vG.readOnly = !cG; vA.readOnly = !cA;
-      }
+      const half = (total / 2).toFixed(2);
+      document.getElementById('split-gobinath').value = half;
+      document.getElementById('split-avadaipriya').value = half;
     }
 
-    document.getElementById('tx-amount').addEventListener('input', calculateSplit);
-
-    // Modal Controls
-    function openTxModal(id = null) {
-      const modal = document.getElementById('tx-modal');
-      const form = document.getElementById('tx-form');
-      
-      if (id) {
-        const t = transactions.find(x => x.id === id);
-        document.getElementById('modal-title').innerText = 'Edit transaction';
-        document.getElementById('btn-save').innerText = 'Update ledger';
-        document.getElementById('tx-id').value = t.id;
-        document.getElementById('tx-desc').value = t.desc;
-        document.getElementById('tx-amount').value = t.amount;
-        document.getElementById('tx-date').value = t.date;
-        document.getElementById('tx-type').value = t.type;
-        updateCategories();
-        document.getElementById('tx-category').value = t.category;
-        document.getElementById('tx-method').value = t.method;
-        document.getElementById('tx-scope').value = t.scope;
-      } else {
-        form.reset();
-        document.getElementById('tx-id').value = '';
-        document.getElementById('modal-title').innerText = 'Add expense';
-        document.getElementById('btn-save').innerText = 'Add to shared ledger';
-        document.getElementById('tx-date').valueAsDate = new Date();
-        updateCategories();
-      }
-      
-      toggleSplitUI();
-      modal.style.display = 'grid';
+    function openTxModal(defaultType = 'DEBIT') {
+      document.getElementById('tx-form').reset();
+      document.getElementById('tx-id').value = '';
+      document.getElementById('modal-heading').textContent = defaultType === 'DEBIT' ? 'Add Expense' : 'Add Income';
+      document.getElementById('tx-type').value = defaultType;
+      document.getElementById('tx-date').valueAsDate = new Date();
+      renderCategoryOptions();
+      toggleSplitBox();
+      document.getElementById('tx-modal').style.display = 'grid';
     }
 
     function closeTxModal() {
       document.getElementById('tx-modal').style.display = 'none';
     }
 
-    // CRUD Operations
-    document.getElementById('tx-form').addEventListener('submit', function(e) {
-      e.preventDefault();
-      
-      const id = document.getElementById('tx-id').value || 't' + Date.now();
-      const scope = document.getElementById('tx-scope').value;
-      
-      let splitStr = '';
-      if (scope === 'Family') {
-        const vG = document.getElementById('val-gobinath').value;
-        const vA = document.getElementById('val-avadaipriya').value;
-        splitStr = `Gobinath: ${vG} | Avadaipriya K.: ${vA}`;
-      }
+    function editTx(id) {
+      const t = ledger.find(x => x.id === id);
+      if (!t) return;
+      document.getElementById('tx-id').value = t.id;
+      document.getElementById('modal-heading').textContent = 'Edit Transaction';
+      document.getElementById('tx-desc').value = t.desc;
+      document.getElementById('tx-amount').value = t.amount;
+      document.getElementById('tx-date').value = t.date;
+      document.getElementById('tx-type').value = t.type;
+      renderCategoryOptions();
+      document.getElementById('tx-category').value = t.category;
+      document.getElementById('tx-method').value = t.method;
+      document.getElementById('tx-scope').value = t.scope;
+      toggleSplitBox();
+      document.getElementById('tx-modal').style.display = 'grid';
+    }
 
-      const tx = {
+    function deleteTx(id) {
+      if (confirm('Delete this transaction permanently?')) {
+        ledger = ledger.filter(x => x.id !== id);
+        saveLedger();
+        navigate(currentView);
+      }
+    }
+
+    document.getElementById('tx-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const id = document.getElementById('tx-id').value || String(Date.now());
+      const scope = document.getElementById('tx-scope').value;
+
+      const record = {
         id: id,
         date: document.getElementById('tx-date').value,
         type: document.getElementById('tx-type').value,
@@ -345,59 +712,22 @@
         method: document.getElementById('tx-method').value,
         scope: scope,
         amount: parseFloat(document.getElementById('tx-amount').value),
-        split: splitStr
+        user: session.name,
+        split: scope === 'Family' ? `Gobinath: ${document.getElementById('split-gobinath').value} | Avadaipriya K.: ${document.getElementById('split-avadaipriya').value}` : ''
       };
 
-      const existingIdx = transactions.findIndex(x => x.id === id);
-      if (existingIdx >= 0) transactions[existingIdx] = tx;
-      else transactions.unshift(tx);
+      const idx = ledger.findIndex(x => x.id === id);
+      if (idx >= 0) ledger[idx] = record;
+      else ledger.unshift(record);
 
+      saveLedger();
       closeTxModal();
-      renderDashboard();
+      navigate(currentView);
     });
 
-    function deleteTx(id) {
-      if(confirm('Delete this transaction permanently?')) {
-        transactions = transactions.filter(x => x.id !== id);
-        renderDashboard();
-      }
-    }
-
-    // Render Engine
-    function renderDashboard() {
-      let inc = 0, exp = 0, ccDues = 0;
-      
-      const tbody = document.getElementById('ledger-body');
-      tbody.innerHTML = transactions.sort((a,b) => new Date(b.date) - new Date(a.date)).map(t => {
-        
-        if(t.type === 'CREDIT') inc += t.amount;
-        if(t.type === 'DEBIT') {
-          exp += t.amount;
-          if(t.method === 'Credit Card') ccDues += t.amount;
-        }
-
-        return `<tr>
-          <td>${t.date}</td>
-          <td><span class="badge ${t.type.toLowerCase()}">${t.type}</span></td>
-          <td>${t.category}</td>
-          <td>${t.desc}</td>
-          <td><span class="pay-method">${t.method}</span></td>
-          <td>${t.scope}</td>
-          <td class="stat-val ${t.type.toLowerCase()}" style="font-size:14px;">${t.type==='CREDIT'?'+':'-'} ₹${t.amount.toLocaleString('en-IN')}</td>
-          <td class="actions">
-            <button onclick="openTxModal('${t.id}')" title="Edit">✎</button>
-            <button onclick="deleteTx('${t.id}')" title="Delete">🗑</button>
-          </td>
-        </tr>`;
-      }).join('');
-
-      document.getElementById('kpi-income').innerText = `₹${inc.toLocaleString('en-IN')}`;
-      document.getElementById('kpi-expense').innerText = `₹${exp.toLocaleString('en-IN')}`;
-      document.getElementById('kpi-net').innerText = `₹${(inc - exp).toLocaleString('en-IN')}`;
-      document.getElementById('kpi-cc').innerText = `₹${ccDues.toLocaleString('en-IN')}`;
-    }
-
-    function logout() { window.location.href = '../index.html'; }
+    // Boot execution
+    updateKPICards();
+    navigate('overview');
   </script>
 </body>
 </html>
