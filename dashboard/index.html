@@ -3,53 +3,83 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gobinath Family Expense — Dashboard</title>
+  <title>Gobinath Family Expense — Advanced Dashboard</title>
   <style>
     :root {
       --bg: #070b14;
       --panel: rgba(14, 21, 38, 0.85);
       --border: #223456;
       --primary: #4f6bf7;
+      --primary-hover: #3d58e3;
       --text: #f3f7fd;
       --muted: #8598b8;
       --green: #2ed573;
       --red: #ff5263;
+      --warn: #fbc531;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, sans-serif; }
     body { background: var(--bg); color: var(--text); padding: 24px; min-height: 100vh; }
+    
+    /* Layout & Header */
     .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
     .brand { font-size: 20px; font-weight: 800; display: flex; align-items: center; gap: 10px; }
     .brand-icon { width: 32px; height: 32px; background: var(--primary); border-radius: 8px; display: grid; place-items: center; font-weight: 900; }
-    .top-btns { display: flex; gap: 10px; }
     .btn { background: #131f38; border: 1px solid var(--border); color: #fff; padding: 9px 16px; border-radius: 10px; font-weight: 600; cursor: pointer; transition: 0.2s; }
     .btn.primary { background: var(--primary); border: none; }
     .btn:hover { filter: brightness(1.15); }
     
-    /* Stats Grid */
-    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
-    .stat-card { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 20px; }
+    /* Advanced Stats Grid */
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .stat-card { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
     .stat-title { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
-    .stat-val { font-size: 26px; font-weight: 800; }
+    .stat-val { font-size: 24px; font-weight: 800; }
     .stat-val.income { color: var(--green); }
     .stat-val.expense { color: var(--red); }
+    .stat-val.cc { color: var(--warn); }
     
     /* Ledger Table */
-    .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 18px; padding: 22px; }
+    .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 18px; padding: 22px; overflow-x: auto; }
     .panel-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
-    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13.5px; }
+    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13.5px; min-width: 800px; }
     th { color: var(--muted); padding: 12px 10px; border-bottom: 1px solid var(--border); text-transform: uppercase; font-size: 11px; }
     td { padding: 14px 10px; border-bottom: 1px solid rgba(255,255,255,0.05); }
     .badge { padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; }
     .badge.debit { background: rgba(255,82,99,0.15); color: var(--red); }
     .badge.credit { background: rgba(46,213,115,0.15); color: var(--green); }
-    .actions button { background: none; border: none; cursor: pointer; font-size: 15px; margin-left: 6px; opacity: 0.7; }
-    .actions button:hover { opacity: 1; }
+    .pay-method { font-size: 11px; padding: 3px 6px; border: 1px solid var(--border); border-radius: 4px; color: var(--muted); }
+    .actions button { background: none; border: none; cursor: pointer; font-size: 15px; margin-left: 6px; opacity: 0.7; color: var(--text); }
+    .actions button:hover { opacity: 1; color: var(--primary); }
 
-    /* Admin Modal */
-    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); display: none; place-items: center; z-index: 100; }
-    .modal { background: #0e1526; border: 1px solid var(--border); border-radius: 20px; width: 100%; max-width: 500px; padding: 26px; }
-    .modal h3 { margin-bottom: 16px; font-size: 18px; }
-    .user-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
+    /* Advanced Transaction Modal */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); display: none; place-items: center; z-index: 100; }
+    .modal { background: #0c1220; border: 1px solid var(--border); border-radius: 16px; width: 100%; max-width: 600px; padding: 24px; max-height: 90vh; overflow-y: auto; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .modal-header h3 { font-size: 20px; font-weight: 700; }
+    .modal-header .sub { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group.full { grid-column: 1 / -1; }
+    .form-group label { font-size: 12px; font-weight: 600; color: var(--muted); }
+    
+    .form-control { background: #11192b; border: 1px solid var(--border); color: #fff; padding: 12px 14px; border-radius: 8px; font-size: 14px; outline: none; }
+    .form-control:focus { border-color: var(--primary); }
+    select.form-control { appearance: none; background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%238598b8%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E"); background-repeat: no-repeat; background-position: right 14px top 50%; background-size: 10px auto; }
+    
+    /* Split UI */
+    .split-box { background: #11192b; border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-bottom: 20px; display: none; }
+    .split-row { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
+    .split-row input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--primary); }
+    .split-row input[type="number"] { width: 100px; background: #070b14; border: 1px solid var(--border); color: #fff; padding: 6px; border-radius: 4px; text-align: right; }
+    
+    .btn-submit { width: 100%; padding: 14px; background: var(--primary); border: none; border-radius: 8px; color: #fff; font-weight: 700; font-size: 15px; cursor: pointer; transition: 0.2s; }
+    .btn-submit:hover { background: var(--primary-hover); }
+
+    /* Custom Scrollbar for Category Dropdown */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
   </style>
 </head>
 <body>
@@ -60,30 +90,33 @@
       <div>Gobinath Family Expense</div>
     </div>
     <div class="top-btns">
-      <button class="btn" onclick="openAdminModal()">⚙ Manage Users</button>
       <button class="btn" onclick="logout()">Logout</button>
     </div>
   </div>
 
   <div class="stats">
     <div class="stat-card">
-      <div class="stat-title">Monthly Income</div>
-      <div class="stat-val income">₹68,000</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-title">Monthly Expenses</div>
-      <div class="stat-val expense">₹29,460</div>
-    </div>
-    <div class="stat-card">
       <div class="stat-title">Net Balance</div>
-      <div class="stat-val">₹38,540</div>
+      <div class="stat-val" id="kpi-net">₹0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-title">Total Income</div>
+      <div class="stat-val income" id="kpi-income">₹0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-title">Total Expense</div>
+      <div class="stat-val expense" id="kpi-expense">₹0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-title">Credit Card Dues</div>
+      <div class="stat-val cc" id="kpi-cc">₹0</div>
     </div>
   </div>
 
   <div class="panel">
     <div class="panel-head">
-      <h3>Active Ledger</h3>
-      <button class="btn primary" onclick="alert('Transaction Modal')">+ Add Transaction</button>
+      <h3>Family Ledger</h3>
+      <button class="btn primary" onclick="openTxModal()">+ Add Entry</button>
     </div>
     <table>
       <thead>
@@ -92,86 +125,279 @@
           <th>Type</th>
           <th>Category</th>
           <th>Description</th>
-          <th>User</th>
+          <th>Pay Method</th>
           <th>Scope</th>
           <th>Amount</th>
           <th>Actions</th>
         </tr>
       </thead>
       <tbody id="ledger-body">
-        <tr>
-          <td>2026-09-12</td>
-          <td><span class="badge debit">DEBIT</span></td>
-          <td>Groceries</td>
-          <td>Monthly superstore shopping</td>
-          <td>Gobinath</td>
-          <td>Family</td>
-          <td>₹3,260</td>
-          <td class="actions">
-            <button title="Edit">✎</button>
-            <button title="Delete">🗑</button>
-          </td>
-        </tr>
+        <!-- Rendered via JS -->
       </tbody>
     </table>
   </div>
 
-  <!-- User Management & Password Reset Modal -->
-  <div id="admin-modal" class="modal-overlay">
+  <!-- Advanced Transaction Modal -->
+  <div id="tx-modal" class="modal-overlay">
     <div class="modal">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 14px;">
-        <h3>Family User Management</h3>
-        <button onclick="closeAdminModal()" style="background:none; border:none; color:#fff; font-size:20px; cursor:pointer;">✕</button>
+      <div class="modal-header">
+        <div>
+          <div class="sub" id="modal-sub">NEW ENTRY · Family</div>
+          <h3 id="modal-title">Add transaction</h3>
+        </div>
+        <button onclick="closeTxModal()" style="background:none; border:none; color:var(--muted); font-size:24px; cursor:pointer;">×</button>
       </div>
 
-      <div style="margin-bottom: 20px;">
-        <p style="font-size: 13px; color: var(--muted); margin-bottom: 8px;">Active Members (10-hr auto session limits):</p>
-        <div class="user-row">
-          <div><strong>Gobinath</strong> (Owner)</div>
-          <div><button class="btn" style="padding:4px 8px; font-size:11px;" onclick="resetUserPassword('gobinath')">Reset Password</button></div>
-        </div>
-        <div class="user-row">
-          <div><strong>Avadaipriya K.</strong> (Owner)</div>
-          <div><button class="btn" style="padding:4px 8px; font-size:11px;" onclick="resetUserPassword('avadaipriya')">Reset Password</button></div>
-        </div>
-      </div>
+      <form id="tx-form">
+        <input type="hidden" id="tx-id">
+        
+        <div class="form-grid">
+          <div class="form-group full">
+            <label>Description</label>
+            <input type="text" id="tx-desc" class="form-control" placeholder="Dinner, party, movie, gift..." required>
+          </div>
+          
+          <div class="form-group">
+            <label>Amount (₹)</label>
+            <input type="number" step="0.01" id="tx-amount" class="form-control" placeholder="0.00" required>
+          </div>
+          
+          <div class="form-group">
+            <label>Date</label>
+            <input type="date" id="tx-date" class="form-control" required>
+          </div>
 
-      <div style="border-top: 1px solid var(--border); padding-top: 14px;">
-        <h4 style="font-size: 14px; margin-bottom: 10px;">Add New Family Member</h4>
-        <input type="text" id="new-user-id" placeholder="Username (e.g. child1)" style="width:100%; height:38px; background:#070b14; border:1px solid var(--border); border-radius:8px; color:#fff; padding:0 10px; margin-bottom:10px;">
-        <input type="text" id="new-user-name" placeholder="Full Display Name" style="width:100%; height:38px; background:#070b14; border:1px solid var(--border); border-radius:8px; color:#fff; padding:0 10px; margin-bottom:12px;">
-        <button class="btn primary" style="width:100%;" onclick="addNewUser()">Add Member to Sheet</button>
-      </div>
+          <div class="form-group">
+            <label>Entry Type</label>
+            <select id="tx-type" class="form-control" onchange="updateCategories()">
+              <option value="DEBIT">Expense</option>
+              <option value="CREDIT">Income</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Payment Method</label>
+            <select id="tx-method" class="form-control">
+              <option value="UPI">UPI / GPay</option>
+              <option value="Credit Card">Credit Card</option>
+              <option value="Debit Card">Debit Card</option>
+              <option value="Cash">Cash</option>
+              <option value="Net Banking">Net Banking</option>
+            </select>
+          </div>
+
+          <div class="form-group full">
+            <label>Category</label>
+            <select id="tx-category" class="form-control" required>
+              <!-- Populated via JS -->
+            </select>
+          </div>
+          
+          <div class="form-group full">
+            <label>Scope</label>
+            <select id="tx-scope" class="form-control" onchange="toggleSplitUI()">
+              <option value="Family">Family (Shared Ledger)</option>
+              <option value="Personal">Personal</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Splitwise style block -->
+        <div class="split-box" id="split-box">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <label>Split Details</label>
+            <select id="split-type" class="form-control" style="width: 140px; padding: 6px; font-size: 12px;" onchange="calculateSplit()">
+              <option value="EQUAL">Equal split</option>
+              <option value="MANUAL">Manual exact</option>
+            </select>
+          </div>
+          
+          <div class="split-row">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <input type="checkbox" id="split-gobinath" checked onchange="calculateSplit()">
+              <span>Gobinath</span>
+            </div>
+            <input type="number" id="val-gobinath" step="0.01" readonly>
+          </div>
+          
+          <div class="split-row">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <input type="checkbox" id="split-avadaipriya" checked onchange="calculateSplit()">
+              <span>Avadaipriya K.</span>
+            </div>
+            <input type="number" id="val-avadaipriya" step="0.01" readonly>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-submit" id="btn-save">Add to shared ledger</button>
+      </form>
     </div>
   </div>
 
   <script>
-    // Session Guard: Require valid session or redirect to login
-    const token = localStorage.getItem('gf_token');
-    const user = JSON.parse(localStorage.getItem('gf_user') || '{}');
-    if (!token) window.location.href = '../index.html';
+    // State & Mock Data (Will integrate with Apps Script Backend)
+    let transactions = [
+      { id: 't1', date: '2026-09-12', type: 'DEBIT', category: 'Groceries', desc: 'Monthly superstore shopping', method: 'Credit Card', scope: 'Family', amount: 3260, split: 'Gobinath: 1630 | Avadaipriya K.: 1630' },
+      { id: 't2', date: '2026-09-11', type: 'DEBIT', category: 'Electricity', desc: 'TNEB Bill', method: 'UPI', scope: 'Family', amount: 1450, split: 'Gobinath: 725 | Avadaipriya K.: 725' },
+      { id: 't3', date: '2026-09-01', type: 'CREDIT', category: 'Salary', desc: 'September Salary', method: 'Net Banking', scope: 'Personal', amount: 68000, split: '' }
+    ];
 
-    function logout() {
-      localStorage.clear();
-      window.location.href = '../index.html';
+    const expCategories = ['Food', 'Dining', 'Party', 'Treat', 'Gift', 'Movie', 'Snacks', 'Travel', 'Transport', 'Fuel', 'Hotel', 'Tickets', 'Entertainment', 'Shopping', 'Groceries', 'Bills', 'Electricity', 'Internet', 'Rent', 'Parking', 'Education', 'Healthcare', 'Childcare'];
+    const incCategories = ['Salary', 'Bonus', 'Reimbursement', 'Gift Received', 'Investment Return'];
+
+    // Initialization
+    document.getElementById('tx-date').valueAsDate = new Date();
+    updateCategories();
+    renderDashboard();
+
+    // UI Updates
+    function updateCategories() {
+      const type = document.getElementById('tx-type').value;
+      const catSelect = document.getElementById('tx-category');
+      const cats = type === 'DEBIT' ? expCategories : incCategories;
+      catSelect.innerHTML = cats.map(c => `<option value="${c}">${c}</option>`).join('');
     }
 
-    function openAdminModal() { document.getElementById('admin-modal').style.display = 'grid'; }
-    function closeAdminModal() { document.getElementById('admin-modal').style.display = 'none'; }
+    function toggleSplitUI() {
+      const scope = document.getElementById('tx-scope').value;
+      document.getElementById('split-box').style.display = scope === 'Family' ? 'block' : 'none';
+      if(scope === 'Family') calculateSplit();
+    }
 
-    function resetUserPassword(uid) {
-      if (confirm(`Reset password for ${uid}? Their password will be cleared, prompting them to set a new password on their next login.`)) {
-        alert(`Password for ${uid} has been cleared. They can now enter a new password on the login screen.`);
+    function calculateSplit() {
+      const total = parseFloat(document.getElementById('tx-amount').value) || 0;
+      const type = document.getElementById('split-type').value;
+      
+      const vG = document.getElementById('val-gobinath');
+      const vA = document.getElementById('val-avadaipriya');
+      const cG = document.getElementById('split-gobinath').checked;
+      const cA = document.getElementById('split-avadaipriya').checked;
+
+      if (type === 'EQUAL') {
+        vG.readOnly = true; vA.readOnly = true;
+        let count = (cG ? 1 : 0) + (cA ? 1 : 0);
+        let splitAmt = count > 0 ? (total / count).toFixed(2) : 0;
+        
+        vG.value = cG ? splitAmt : 0;
+        vA.value = cA ? splitAmt : 0;
+      } else {
+        vG.readOnly = !cG; vA.readOnly = !cA;
       }
     }
 
-    function addNewUser() {
-      const id = document.getElementById('new-user-id').value.trim();
-      const name = document.getElementById('new-user-name').value.trim();
-      if (!id || !name) return alert('Enter both username and full name.');
-      alert(`User ${name} (@${id}) added! They can log in immediately and set their password.`);
-      closeAdminModal();
+    document.getElementById('tx-amount').addEventListener('input', calculateSplit);
+
+    // Modal Controls
+    function openTxModal(id = null) {
+      const modal = document.getElementById('tx-modal');
+      const form = document.getElementById('tx-form');
+      
+      if (id) {
+        const t = transactions.find(x => x.id === id);
+        document.getElementById('modal-title').innerText = 'Edit transaction';
+        document.getElementById('btn-save').innerText = 'Update ledger';
+        document.getElementById('tx-id').value = t.id;
+        document.getElementById('tx-desc').value = t.desc;
+        document.getElementById('tx-amount').value = t.amount;
+        document.getElementById('tx-date').value = t.date;
+        document.getElementById('tx-type').value = t.type;
+        updateCategories();
+        document.getElementById('tx-category').value = t.category;
+        document.getElementById('tx-method').value = t.method;
+        document.getElementById('tx-scope').value = t.scope;
+      } else {
+        form.reset();
+        document.getElementById('tx-id').value = '';
+        document.getElementById('modal-title').innerText = 'Add expense';
+        document.getElementById('btn-save').innerText = 'Add to shared ledger';
+        document.getElementById('tx-date').valueAsDate = new Date();
+        updateCategories();
+      }
+      
+      toggleSplitUI();
+      modal.style.display = 'grid';
     }
+
+    function closeTxModal() {
+      document.getElementById('tx-modal').style.display = 'none';
+    }
+
+    // CRUD Operations
+    document.getElementById('tx-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const id = document.getElementById('tx-id').value || 't' + Date.now();
+      const scope = document.getElementById('tx-scope').value;
+      
+      let splitStr = '';
+      if (scope === 'Family') {
+        const vG = document.getElementById('val-gobinath').value;
+        const vA = document.getElementById('val-avadaipriya').value;
+        splitStr = `Gobinath: ${vG} | Avadaipriya K.: ${vA}`;
+      }
+
+      const tx = {
+        id: id,
+        date: document.getElementById('tx-date').value,
+        type: document.getElementById('tx-type').value,
+        category: document.getElementById('tx-category').value,
+        desc: document.getElementById('tx-desc').value,
+        method: document.getElementById('tx-method').value,
+        scope: scope,
+        amount: parseFloat(document.getElementById('tx-amount').value),
+        split: splitStr
+      };
+
+      const existingIdx = transactions.findIndex(x => x.id === id);
+      if (existingIdx >= 0) transactions[existingIdx] = tx;
+      else transactions.unshift(tx);
+
+      closeTxModal();
+      renderDashboard();
+    });
+
+    function deleteTx(id) {
+      if(confirm('Delete this transaction permanently?')) {
+        transactions = transactions.filter(x => x.id !== id);
+        renderDashboard();
+      }
+    }
+
+    // Render Engine
+    function renderDashboard() {
+      let inc = 0, exp = 0, ccDues = 0;
+      
+      const tbody = document.getElementById('ledger-body');
+      tbody.innerHTML = transactions.sort((a,b) => new Date(b.date) - new Date(a.date)).map(t => {
+        
+        if(t.type === 'CREDIT') inc += t.amount;
+        if(t.type === 'DEBIT') {
+          exp += t.amount;
+          if(t.method === 'Credit Card') ccDues += t.amount;
+        }
+
+        return `<tr>
+          <td>${t.date}</td>
+          <td><span class="badge ${t.type.toLowerCase()}">${t.type}</span></td>
+          <td>${t.category}</td>
+          <td>${t.desc}</td>
+          <td><span class="pay-method">${t.method}</span></td>
+          <td>${t.scope}</td>
+          <td class="stat-val ${t.type.toLowerCase()}" style="font-size:14px;">${t.type==='CREDIT'?'+':'-'} ₹${t.amount.toLocaleString('en-IN')}</td>
+          <td class="actions">
+            <button onclick="openTxModal('${t.id}')" title="Edit">✎</button>
+            <button onclick="deleteTx('${t.id}')" title="Delete">🗑</button>
+          </td>
+        </tr>`;
+      }).join('');
+
+      document.getElementById('kpi-income').innerText = `₹${inc.toLocaleString('en-IN')}`;
+      document.getElementById('kpi-expense').innerText = `₹${exp.toLocaleString('en-IN')}`;
+      document.getElementById('kpi-net').innerText = `₹${(inc - exp).toLocaleString('en-IN')}`;
+      document.getElementById('kpi-cc').innerText = `₹${ccDues.toLocaleString('en-IN')}`;
+    }
+
+    function logout() { window.location.href = '../index.html'; }
   </script>
 </body>
 </html>
